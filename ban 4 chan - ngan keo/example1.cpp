@@ -1,7 +1,7 @@
 ﻿//Chương trình vẽ 1 hình lập phương đơn vị theo mô hình lập trình OpenGL hiện đại
 
 #include "Angel.h"  /* Angel.h là file tự phát triển (tác giả Prof. Angel), có chứa cả khai báo includes glew và freeglut*/
-
+#include "mat.h"
 
 // remember to prototype
 void generateGeometry( void );
@@ -28,6 +28,7 @@ color4 vertex_colors[8]; /*Danh sách các màu tương ứng cho 8 đỉnh hìn
 GLuint program;
 mat4 ctm;
 GLuint matrix_loc;
+
 
 void initCube()
 {
@@ -111,22 +112,48 @@ void shaderSetup( void )
 	GLuint loc_vColor = glGetAttribLocation(program, "vColor");
 	glEnableVertexAttribArray(loc_vColor);
 	glVertexAttribPointer(loc_vColor, 4, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(sizeof(points)));
-
+	
 	matrix_loc = glGetUniformLocation(program, "model_view");
 
     glClearColor( 1.0, 1.0, 1.0, 1.0 );        /* Thiết lập màu trắng là màu xóa màn hình*/
 }
-
 void MatBan()
 {
-	ctm = RotateX(30) * RotateY(30);
+	mat4 m = Scale(1.2, 0.02, 0.5);
+	glUniformMatrix4fv(matrix_loc, 1, GL_TRUE, ctm * m);
 	glDrawArrays(GL_TRIANGLES, 0, NumPoints);    /*Vẽ các tam giác*/
-
 }
 
-void ChanBan()
+void ChanBan(GLfloat x, GLfloat y, GLfloat z)
 {
+	mat4 m = Translate(x, y, z) * Scale(0.05, 0.7, 0.05);
+	glUniformMatrix4fv(matrix_loc, 1, GL_TRUE, ctm * m);
+	glDrawArrays(GL_TRIANGLES, 0, NumPoints);    /*Vẽ các tam giác*/
+}
 
+void BonChan()
+{
+	ChanBan(-0.575, -0.35, 0.225);
+	ChanBan(-0.575, -0.35, -0.225);
+	ChanBan(0.575, -0.35, 0.225);
+	ChanBan(0.575, -0.35, -0.225);
+}
+
+void NganKeo()
+{
+	mat4 m = Scale(1.1, 0.02, 0.4);
+	glUniformMatrix4fv(matrix_loc, 1, GL_TRUE, ctm * m);
+	glDrawArrays(GL_TRIANGLES, 0, NumPoints);    /*Vẽ các tam giác*/
+}
+
+GLfloat m = 0, n = 0, p = 0, z2 = 0, alpha = 0, bta = 0;
+
+void Ban()
+{
+	MatBan();
+	BonChan();
+	ctm = ctm * Translate(0, -0.15, 0) * Translate(0, 0, z2);
+	NganKeo();
 }
 
 void display( void )
@@ -134,11 +161,8 @@ void display( void )
 	
     glClear( GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT );   
 
-	ChanBan();
-	MatBan();
-
-
-	
+	ctm = RotateX(bta) *  RotateY(alpha);
+	Ban();
 
 	glutSwapBuffers();									   
 }
@@ -149,6 +173,30 @@ void keyboard( unsigned char key, int x, int y )
 	// keyboard handler
 
     switch ( key ) {
+	case 'k':
+		if (z2 <= 0.5) z2 += 0.1;
+		glutPostRedisplay();
+		break;
+	case 'K':
+		if (z2 >= 0) z2 -= 0.1;
+		glutPostRedisplay();
+		break;
+	case 'q':
+		alpha += 5;
+		glutPostRedisplay();
+		break;
+	case 'Q':
+		alpha -= 5;
+		glutPostRedisplay();
+		break;
+	case 'x':
+		bta += 5;
+		glutPostRedisplay();
+		break;
+	case 'X':
+		bta -= 5;
+		glutPostRedisplay();
+		break;
     case 033:			// 033 is Escape key octal value
         exit(1);		// quit program
         break;
@@ -164,7 +212,7 @@ int main( int argc, char **argv )
     glutInitDisplayMode( GLUT_DOUBLE|GLUT_RGBA);
     glutInitWindowSize( 640, 640 );                 
 	glutInitWindowPosition(100,150);               
-    glutCreateWindow( "Drawing a Cube" );            
+    glutCreateWindow( "Ban 4 Chan" );            
 
    
 	glewInit();										
