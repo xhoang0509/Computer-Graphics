@@ -26,6 +26,7 @@ point4 vertices[8]; /* Danh sách 8 đỉnh của hình lập phương*/
 color4 vertex_colors[8]; /*Danh sách các màu tương ứng cho 8 đỉnh hình lập phương*/
 
 GLuint program;
+GLuint model_view_loc;
 
 void initCube()
 {
@@ -75,34 +76,6 @@ void generateGeometry( void )
 	makeColorCube();
 }
 
-GLdouble BASE_HEIGHT = 0.2, BASE_WIDTH = 0.2, UPPER_ARM_HEIGHT = 0.3,
-UPPER_ARM_WIDTH = 0.1, LOWER_ARM_HEIGHT = 0.2, LOWER_ARM_WIDTH = 0.05;
-mat4 instance;
-mat4 model_view;
-GLuint model_view_loc;
-GLfloat theta[] = { 0, 0, 0 };
-
-void base()
-{
-	instance = Translate(0.0, 0.5*BASE_HEIGHT, 0.0)
-		*Scale(BASE_WIDTH, BASE_HEIGHT, BASE_WIDTH);
-	glUniformMatrix4fv(model_view_loc, 1, GL_TRUE, model_view*instance);
-	glDrawArrays(GL_TRIANGLES, 0, NumPoints);
-}
-void upper_arm()
-{
-	instance = Translate(0.0, 0.5*UPPER_ARM_HEIGHT, 0.0)
-		*Scale(UPPER_ARM_WIDTH, UPPER_ARM_HEIGHT, UPPER_ARM_WIDTH);
-	glUniformMatrix4fv(model_view_loc, 1, GL_TRUE, model_view*instance);
-	glDrawArrays(GL_TRIANGLES, 0, NumPoints);
-}
-void lower_arm()
-{
-	instance = Translate(0.0, 0.5*LOWER_ARM_HEIGHT, 0.0)
-		*Scale(LOWER_ARM_WIDTH, LOWER_ARM_HEIGHT, LOWER_ARM_WIDTH);
-	glUniformMatrix4fv(model_view_loc, 1, GL_TRUE, model_view*instance);
-	glDrawArrays(GL_TRIANGLES, 0, NumPoints);
-}
 
 void initGPUBuffers( void )
 {
@@ -138,81 +111,87 @@ void shaderSetup( void )
 	glEnableVertexAttribArray(loc_vColor);
 	glVertexAttribPointer(loc_vColor, 4, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(sizeof(points)));
 
-	model_view_loc = glGetUniformLocation(program, "Model_View");
+	model_view_loc = glGetUniformLocation(program, "model_view");
 
     glClearColor( 1.0, 1.0, 1.0, 1.0 );        /* Thiết lập màu trắng là màu xóa màn hình*/
 }
+mat4 instance;
+mat4 model_view;
+GLfloat alpha1 = 0, alpha2 = 0, alpha3 = 0;
+void Base() {
+	instance = Scale(0.2, 0.2, 0.2);
+	glUniformMatrix4fv(model_view_loc, 1, GL_TRUE, model_view * instance);
+    glDrawArrays( GL_TRIANGLES, 0, NumPoints );    /*Vẽ các tam giác*/
+}
 
-void Robot_Arm()
-{
-	model_view = RotateY(theta[0]);
-	base();
-	model_view = model_view * Translate(0.0, BASE_HEIGHT, 0.0)
-		*RotateZ(theta[1]);
-	upper_arm();
-	model_view = model_view * Translate(0.0, UPPER_ARM_HEIGHT, 0.0)
-		*RotateZ(theta[2]);
-	lower_arm();
+void Upper_Arm() {
+	instance = Translate(0, 0.15, 0) *  Scale(0.1, 0.3, 0.1);
+	glUniformMatrix4fv(model_view_loc, 1, GL_TRUE, model_view * instance);
+	glDrawArrays(GL_TRIANGLES, 0, NumPoints);
+}
+
+void Lower_Aram() {
+	instance = Translate(0, 0.1, 0) *  Scale(0.05, 0.2, 0.05);
+	glUniformMatrix4fv(model_view_loc, 1, GL_TRUE, model_view * instance);
+	glDrawArrays(GL_TRIANGLES, 0, NumPoints);
+}
+
+void Robot_Arm() {
+	model_view = RotateY(alpha1);
+	Base();
+
+	model_view = model_view * Translate(0, 0.1, 0) * RotateZ(alpha2);
+	Upper_Arm();
+
+	model_view = model_view * Translate(0, 0.3, 0) * RotateZ(alpha3);
+	Lower_Aram();
 }
 
 
-void display(void)
+void display( void )
 {
-
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glClear( GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT );                
 
 	Robot_Arm();
 
-	glutSwapBuffers();
+	glutSwapBuffers();									   
 }
 
 
-void keyboard(unsigned char key, int x, int y)
+void keyboard( unsigned char key, int x, int y )
 {
-	switch (key) {
+	// keyboard handler
+
+    switch ( key ) {
 	case 'b':
-		theta[0] += 5;
-		if (theta[0] > 360) theta[0] -= 360;
+		alpha1 -= 5;
 		glutPostRedisplay();
 		break;
 	case 'B':
-		// một số lệnh 
-		theta[0] -= 5;
-		if (theta[0] > 360) theta[0] -= 360;
+		alpha1 += 5;
 		glutPostRedisplay();
 		break;
-
 	case 'u':
-		// một số lệnh 
-		theta[1] += 5;
-		if (theta[1] > 360) theta[1] -= 360;
+		alpha2 -= 5;
 		glutPostRedisplay();
 		break;
 	case 'U':
-		// một số lệnh 
-		theta[1] -= 5;
-		if (theta[1] > 360) theta[1] -= 360;
+		alpha2 += 5;
 		glutPostRedisplay();
 		break;
-
 	case 'l':
-		// một số lệnh 
-		theta[2] += 5;
-		if (theta[2] > 360) theta[2] -= 360;
+		alpha3 -= 5;
 		glutPostRedisplay();
 		break;
 	case 'L':
-		// một số lệnh 
-		theta[2] -= 5;
-		if (theta[2] > 360) theta[2] = 0;
+		alpha3 += 5;
 		glutPostRedisplay();
 		break;
 
-		break;
-
-	default:
-		break;
-	}
+    case 033:			// 033 is Escape key octal value
+        exit(1);		// quit program
+        break;
+    }
 }
 
 
@@ -224,7 +203,7 @@ int main( int argc, char **argv )
     glutInitDisplayMode( GLUT_DOUBLE|GLUT_RGBA);
     glutInitWindowSize( 640, 640 );                 
 	glutInitWindowPosition(100,150);               
-    glutCreateWindow( "Drawing a Robot Arm without stack" );            
+    glutCreateWindow( "Drawing a Cube" );            
 
    
 	glewInit();										
