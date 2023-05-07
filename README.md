@@ -1,2 +1,1 @@
-# Do-hoa-may-tinh-Haui
-Đồ họa máy tính - Haui - hè 2021
+# Computer-Graphics 2021
